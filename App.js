@@ -5,18 +5,13 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { FlatList, Image, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Header } from 'react-native-elements';
+import { useAssets, Asset } from 'expo-asset';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import InspectMain from './InspectMain';
 import QRScanner from './QRScanner';
 import ViewMain from './ViewMain';
 import Capture from './Capture';
-
-const CompanyLogo = () => (
-  <Image
-    source={require('./assets/tripatra-logo.jpeg')}
-    style={{ width: 60, height: 50 }}
-  />
-);
+import CompanyLogo from './CompanyLogo';
 
 // Variable for navigation and page linking
 const Stack = createStackNavigator();

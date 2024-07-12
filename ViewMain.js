@@ -4,13 +4,7 @@ import { useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Header } from 'react-native-elements';
 import { SafeAreaProvider } from "react-native-safe-area-context";
-
-const CompanyLogo = () => (
-    <Image
-      source={require('./assets/tripatra-logo.jpeg')}
-      style={{ width: 60, height: 50 }}
-    />
-  );
+import CompanyLogo from './CompanyLogo';
 
 function ViewPage({ }) {
     const navigation = useNavigation();
@@ -28,12 +22,12 @@ function ViewPage({ }) {
         });
     }; 
 
-        // Replace 'localhost' with your machine's IP address
-    const apiUrl = 'http://10.97.109.171:3000/api/material-storage';
+    // Replace 'localhost' with your machine's IP address
+    const API_URL = 'https://tp-phr.azurewebsites.net/api/material-storage';
 
     // Use fetch with apiUrl
     useEffect(() => {
-        fetch(apiUrl)
+        fetch(API_URL)
             .then(res => {
                 if (!res.ok) {
                     throw new Error('Network response was not ok ' + res.statusText);
@@ -53,7 +47,7 @@ function ViewPage({ }) {
             .catch((error) => {
                 setError(error.message);
             });
-    }, [apiUrl]);
+    }, [API_URL]);
 
     const getColumnDataById = (proID, column) => {
         let item = null;

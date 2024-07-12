@@ -1,23 +1,23 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-// const cors = require('cors');
+const cors = require('cors');
 const { Pool } = require('pg');
 
 const app = express();
-const port = 3000;
-const localhost = '10.97.109.171'
+const port = process.env.PORT || 3000;
+const localhost = '10.97.109.186';
 
 // Middleware
 app.use(bodyParser.json());
-// app.use(cors());
+app.use(cors());
 
 // PostgreSQL client setup
 const pool = new Pool({
-  user: 'tapdatalakeprod@tapdatalake-prod',
-  host: 'tapdatalake-prod.postgres.database.azure.com',
-  database: 'tapdatalake',
-  password: 'JendSudirm@n2024',
-  port: 5432,
+  user: process.env.DB_USER || 'tapdatalakeprod@tapdatalake-prod',
+  host: process.env.DB_HOST || 'tapdatalake-prod.postgres.database.azure.com',
+  database: process.env.DB_NAME || 'tapdatalake',
+  password: process.env.DB_PASSWORD || 'JendSudirm@n2024',
+  port: process.env.DB_PORT || 5432,
 });
 
 // Material Storage
@@ -91,3 +91,4 @@ app.get('/api/material-attachment', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on http://${localhost}:${port}`);
 });
+

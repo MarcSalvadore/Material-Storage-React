@@ -1,10 +1,9 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Camera, CameraView } from 'expo-camera';
-import * as MediaLibrary from 'expo-media-library'; // Import MediaLibrary to save captured photo
+import * as MediaLibrary from 'expo-media-library';
 import React, { useEffect, useRef, useState } from 'react';
 import { Dimensions, Image, Pressable, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { RNCamera } from 'react-native-camera';
 
 const WINDOW_HEIGHT = Dimensions.get("window").height;
 const captureSize = Math.floor(WINDOW_HEIGHT * 0.09);
@@ -17,12 +16,14 @@ export default function Capture() {
   const cameraRef = useRef();
   const navigation = useNavigation();
   const route = useRoute();
+  const [facing, setFacing] = useState('back');
   const { onCapture } = route.params;
 
   useEffect(() => {
     const getCameraPermissions = async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
+      const cameraStatus = await Camera.requestCameraPermissionsAsync();
+      const mediaLibraryStatus = await MediaLibrary.requestPermissionsAsync();
+      setHasPermission(cameraStatus.status === 'granted' && mediaLibraryStatus.status === 'granted');
     };
 
     getCameraPermissions();
@@ -35,15 +36,16 @@ export default function Capture() {
   const handleTakePicture = async () => {
     if (cameraRef.current) {
       try {
-        const { uri } = await cameraRef.current.takePictureAsync();
-        console.log('Photo taken:', uri);
+        const photo = await cameraRef.current.takePictureAsync();
+        console.log('Photo taken:', photo.uri);
 
         // Save the photo to the device's gallery using MediaLibrary
-        const asset = await MediaLibrary.createAssetAsync(uri);
-        onCapture(uri);
+        const asset = await MediaLibrary.createAssetAsync(photo.uri);
+        onCapture(photo.uri);
 
         // Display the captured image
-        setCapturedImage(uri);
+        setCapturedImage(photo.uri);
+        setIsPreview(true);
       } catch (error) {
         console.error('Failed to take picture:', error);
         // Handle error taking photo
@@ -54,6 +56,7 @@ export default function Capture() {
   const handleRetakePicture = () => {
     // Clear the captured image URI to go back to camera preview
     setCapturedImage(null);
+    setIsPreview(false);
   };
 
   const goToHomePage = () => {
@@ -69,7 +72,7 @@ export default function Capture() {
 
   return (
     <SafeAreaView style={styles.container}>
-    {capturedImage ? (
+      {capturedImage ? (
         <View style={{ flex: 1 }}>
           <Image source={{ uri: capturedImage }} style={{ flex: 1 }} />
           <View style={styles.fixToText}>
@@ -83,22 +86,22 @@ export default function Capture() {
         </View>
       ) : (
         <View style={{ flex: 1 }}>
-            <CameraView
-                ref={cameraRef}
-                style={styles.container}
-                type={RNCamera.Constants.Type.back}
-                flashMode={RNCamera.Constants.FlashMode.on}
-                onCameraReady={onCameraReady}
-                onMountError={(error) => {
-                console.log("camera error", error);
-                }}
-            />
+          <CameraView
+            ref={cameraRef}
+            style={styles.container}
+            facing={facing}
+            onCameraReady={onCameraReady}
+            onMountError={(error) => {
+              console.log("camera error", error);
+            }}
+          />
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-                style={styles.captureButton}
-                onPress={handleTakePicture}
+              style={styles.captureButton}
+              onPress={handleTakePicture}
+              disabled={!isCameraReady}
             >
-                <FontAwesome name="dot-circle-o" size={100} color="white" />
+              <FontAwesome name="dot-circle-o" size={100} color="white" />
             </TouchableOpacity>
           </View>
         </View>
@@ -108,44 +111,43 @@ export default function Capture() {
 }
 
 const styles = StyleSheet.create({
-    fixToText: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        position: 'absolute',
-        alignSelf: 'center',
-        bottom: 0,
-        marginBottom: 50,
-        width: '50%',
-    },
-    doneButton: {
-        marginBottom: 15,
-        justifyContent: 'flex-end',
-    },
-    captureButton: {
-        marginBottom: 15,
-        alignItems: 'center',
-    },
-    capture: {
-        backgroundColor: "#f5f6f5",
-        borderRadius: 5,
-        height: captureSize,
-        width: captureSize,
-        borderRadius: Math.floor(captureSize / 2),
-        marginHorizontal: 31,
-    },
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    buttonContainer: {
-        position: 'absolute',
-        bottom: 20,
-        alignSelf: 'center',
-        marginBottom: 20,
-    },
-    retryContainer: {
-        position: 'absolute',
-        bottom: 20,
-        marginBottom: 20,
-    },
+  fixToText: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    position: 'absolute',
+    alignSelf: 'center',
+    bottom: 0,
+    marginBottom: 50,
+    width: '50%',
+  },
+  doneButton: {
+    marginBottom: 15,
+    justifyContent: 'flex-end',
+  },
+  captureButton: {
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  capture: {
+    backgroundColor: "#f5f6f5",
+    height: captureSize,
+    width: captureSize,
+    borderRadius: Math.floor(captureSize / 2),
+    marginHorizontal: 31,
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  buttonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  retryContainer: {
+    position: 'absolute',
+    bottom: 20,
+    marginBottom: 20,
+  },
 });

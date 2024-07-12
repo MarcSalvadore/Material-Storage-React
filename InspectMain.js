@@ -4,13 +4,7 @@ import React, { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Header } from 'react-native-elements';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-
-const CompanyLogo = () => (
-  <Image
-    source={require('./assets/tripatra-logo.jpeg')}
-    style={{ width: 60, height: 50 }}
-  />
-);
+import CompanyLogo from './CompanyLogo';
 
 // Main functionality and main page
 function InspectPage({ }) {
@@ -34,7 +28,7 @@ function InspectPage({ }) {
   const formattedDate = `${date}/${month}/${year} ${hours}:${minutes}:${seconds}.${milliseconds}`;
 
   const saveData = async() => {
-    const apiUrl = 'http://10.97.109.171:3000/api/material-storage';
+    const apiUrl = 'https://tp-phr.azurewebsites.net/api/material-storage';
     const response = fetch(apiUrl, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},

@@ -1,16 +1,14 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const { getDefaultConfig } = require('expo/metro-config');
 
-module.exports = function (baseConfig) {
-  const defaultConfig = mergeConfig(baseConfig, getDefaultConfig(__dirname));
-  const {resolver: {assetExts, sourceExts}} = defaultConfig;
+const config = getDefaultConfig(__dirname);
 
-  return mergeConfig(
-    defaultConfig,
-    {
-      resolver: {
-        assetExts: assetExts.filter(ext => ext !== 'svg'),
-        sourceExts: [...sourceExts, 'svg'],
-      },
-    },
-  );
-};
+config.transformer.assetPlugins = ['expo-asset/tools/hashAssetFiles'];
+
+config.transformer.getTransformOptions = async () => ({
+  transform: {
+    experimentalImportSupport: false,
+    inlineRequires: false,
+  },
+});
+
+module.exports = config;
