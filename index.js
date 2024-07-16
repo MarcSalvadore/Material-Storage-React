@@ -5,7 +5,7 @@ const { Pool } = require('pg');
 
 const app = express();
 const port = process.env.PORT || 3000;
-const localhost = '10.97.109.186';
+const localhost = '192.168.1.142';
 
 // Middleware
 app.use(bodyParser.json());
@@ -19,6 +19,32 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD || 'JendSudirm@n2024',
   port: process.env.DB_PORT || 5432,
 });
+
+const upload = multer({ storage: multer.memoryStorage() });
+// Route to upload a file
+app.post('/api/upload', checkApiToken, upload.single('file'), async (req, res) => {
+  try {
+    const blobName = new Date().getTime() + '-' + req.file.originalname;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    // Upload file to Azure Blob Storage
+    await blockBlobClient.upload(req.file.buffer, req.file.size);
+
+    // Get file URL
+    const fileUrl = blockBlobClient.url;
+
+    // Save file URL to PostgreSQL
+    const { projectId } = req.body;
+    const query = 'INSERT INTO pms.c0_04_04_epc_material_storage_attachments_db (material_storage_id,attachment_name, attachment_url) VALUES ($1, $2, $3) RETURNING *';
+    const values = [projectId, fileUrl];
+
+    const result = await pool.query(query, values);
+    res.json(result.rows[0]); // Return the inserted row
+  } catch (err) {
+    console.error('Error uploading file:', err.message);
+    res.status(500).send('Server error');
+  }
+  });
 
 // Material Storage
 app.get('/api/material-storage', async (req, res) => {

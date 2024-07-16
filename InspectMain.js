@@ -14,74 +14,67 @@ function InspectPage({ }) {
   const [capturedImage, setCapturedImage] = useState(null);
   const [response, setResponse] = useState([]);
   const navigation = useNavigation();
-  const currentDate = new Date();
 
-  // Extract date, month, and year from Date object
-  const date = currentDate.getDate();
-  const month = currentDate.getMonth() + 1; // January is 0, so we add 1
-  const year = currentDate.getFullYear();
+  const formatDateForDatabase = (date) => {
+    const pad = (number) => (number < 10 ? `0${number}` : number);
+  
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1); // Months are zero-based
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+    const milliseconds = date.getMilliseconds().toString().padStart(3, '0');
+  
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+  };
+  
+  const formattedDate = formatDateForDatabase(new Date());
 
-  // Extract hours, minutes, and seconds from Date object
-  const hours = currentDate.getHours();
-  const minutes = currentDate.getMinutes();
-  const seconds = currentDate.getSeconds();
-  const milliseconds = currentDate.getMilliseconds().toString().padStart(3, '0');
-
-  // Format the date to your desired format
-  const formattedDate = `${date}/${month}/${year} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+  // Replace 'localhost' with your machine's IP address
+  const API_URL = 'https://tp-phr.azurewebsites.net/api/material-storage';
 
   const saveData = async () => {
-    const payload = {
-      projectName: text,
-      mrrNo: textB,
-      materialId: textC,
-      locationArea: textD,
-      newOrExcess: textE,
-      locationId: textF,
-      outdoorIndoor: textG,
-      createdBy: 'Marc Salvadore',
-      createdOn: formattedDate,
-      updatedBy: 'Marc Salvadore',
-      updatedOn: formattedDate,
-      status: textH,
-    };
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          materialId: textC,
+          projectName: text,
+          mrrNo: textB,
+          locationArea: textD,
+          newOrExcess: textE,
+          locationId: textF,
+          outdoorIndoor: textG,
+          createdBy: 'Marc Salvadore',
+          createdOn: formattedDate,
+          updatedBy: 'Marc Salvadore',
+          updatedOn: formattedDate,
+          status: textH,
+        }),
+      });
   
-    console.log('Payload:', payload);
-    
-    const response = fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+      // Log the raw response for debugging
+      const rawResponse = await response.text();
+      console.log('Raw response text:', rawResponse);
+  
+      // Parse the response as JSON
+      const jsonResponse = JSON.parse(rawResponse);
+  
+      if (response.ok) {
+        console.warn('Saved Successfully:', jsonResponse);
 
-    if ((await response).json()) {
-      console.warn("Saved Succesfull'")
+        // Alert for successful submission
+        alert('Data saved successfully!');
+      } else {
+        console.error('Failed to save. Status:', response.status, 'Response:', jsonResponse);
+      }
+    } catch (error) {
+      console.error('Error during fetch:', error);
     }
-    // try {
-  
-    //   // // Await the text() method to get the raw response text
-    //   // const responseText = await response.text();
-    //   // console.log('Raw response:', responseText);
-  
-    //   // if (!response.ok) {
-    //   //   const errorMessage = `Network response was not ok: ${response.status} ${response.statusText}`;
-    //   //   console.error(errorMessage);
-    //   //   alert(`Error: ${errorMessage}. Details: ${responseText}`);
-    //   //   return;
-    //   // }
-  
-    //   // // Parse the responseText as JSON
-    //   // const data = JSON.parse(responseText);
-    //   if (await response.json()) {
-    //     console.warn("Saved Successfully", data);
-    //   }
-    // } catch (error) {
-    //   console.error('Fetch error:', error);
-    //   alert('An error occurred: ' + error.message);
-    // }
   };
+  
 
   const handleDeletePicture = async () => {
     if (capturedImage) {
@@ -95,9 +88,6 @@ function InspectPage({ }) {
       }
     }
   };
-
-  // Replace 'localhost' with your machine's IP address
-  const API_URL = 'https://tp-phr.azurewebsites.net/api/material-storage';
 
   // Use fetch with apiUrl
   useEffect(() => {
@@ -131,8 +121,6 @@ function InspectPage({ }) {
             break;
         }
     }
-    // console.log('Result:', response);
-    // console.log(`Finding item with id ${proID}:`, item);
     return item ? item[column] : '';
   };
 
@@ -153,15 +141,6 @@ function InspectPage({ }) {
   // For deleting input inside the TextInput
   const handleClearText = (setter) => {
     setter('');
-  };
-
-  // Handle QRScanner navigation and data retrieval from QRScanner page
-  const dataQRMMR = () => {
-    navigation.navigate('QRScanner', {
-      onScan: (data) => {
-        setMRR(data)
-      }
-    });
   };
 
   // Handle QRScanner navigation and data retrieval from QRScanner page
@@ -215,7 +194,7 @@ function InspectPage({ }) {
 
   const handleSubmit = () => {
     // Your submission logic here
-    saveData();
+    saveData()
 
     // Clear all box
     handleClearText(setMaterialId);
@@ -224,8 +203,6 @@ function InspectPage({ }) {
     handleClearText(setLocationId);
     handleClearText(setInOut);
     handleClearText(setStatus);
-    // Delete the captured image after submission
-    // handleDeletePicture();
   };
 
   return (
@@ -326,7 +303,7 @@ function InspectPage({ }) {
                 }
                 style={styles.picker}
               >
-                <Picker.Item label="Scroll Your Input" value="" enabled={false} />
+                <Picker.Item label="Choose Your Input" value="" enabled={false} />
                 <Picker.Item label="New" value="New" />
                 <Picker.Item label="Excess" value="Excess" />
               </Picker>
@@ -367,7 +344,7 @@ function InspectPage({ }) {
                 }
                 style={styles.picker}
               >
-                <Picker.Item label="Scroll Your Input" value="" enabled={false} />
+                <Picker.Item label="Choose Your Input" value="" enabled={false} />
                 <Picker.Item label="Outdoor" value="Outdoor" />
                 <Picker.Item label="Indoor" value="Indoor" />
               </Picker>
