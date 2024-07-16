@@ -9,7 +9,7 @@ import CompanyLogo from './CompanyLogo';
 function ViewPage({ }) {
     const navigation = useNavigation();
     const route = useRoute();
-    const [projectId, setProjectId] = useState('')
+    const [projectId, setProjectId] = useState(3)
     const [response, setResponse] = useState([]);
     const [error, setError] = useState(null);
 

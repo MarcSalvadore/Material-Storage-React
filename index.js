@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors');
+// const cors = require('cors');
 const { Pool } = require('pg');
 
 const app = express();
@@ -9,7 +9,7 @@ const localhost = '10.97.109.186';
 
 // Middleware
 app.use(bodyParser.json());
-app.use(cors());
+// app.use(cors());
 
 // PostgreSQL client setup
 const pool = new Pool({

@@ -67,14 +67,14 @@ function InspectPage({ }) {
   };
 
   // Input variable
-  const [text, setProjectName] = useState('')
-  const [textB, setMRR] = useState('')
-  const [textC, setMaterialId] = useState('')
-  const [textD, setLocationArea] = useState('')
-  const [textE, setNew] = useState('')
-  const [textF, setLocationId] = useState('')
-  const [textG, setInOut] = useState('')
-  const [textH, setStatus] = useState('')
+  const [text, setProjectName] = useState('test')
+  const [textB, setMRR] = useState('test')
+  const [textC, setMaterialId] = useState('test')
+  const [textD, setLocationArea] = useState('test')
+  const [textE, setNew] = useState('test')
+  const [textF, setLocationId] = useState('test')
+  const [textG, setInOut] = useState('test')
+  const [textH, setStatus] = useState('test')
   const [images, setImage] = useState('')
   const [imageItem, setImageItem] = useState('')
 
