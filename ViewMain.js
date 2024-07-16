@@ -5,6 +5,7 @@ import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View 
 import { Header } from 'react-native-elements';
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import CompanyLogo from './CompanyLogo';
+import LPMSLogo from './LPMSLogo';
 
 function ViewPage({ }) {
     const navigation = useNavigation();
@@ -79,8 +80,26 @@ function ViewPage({ }) {
     return (
         <SafeAreaProvider>
             <Header
-                leftComponent={<CompanyLogo />}
-                centerComponent={{ text: 'Tripatra Engineering', style: { color: '#fff', fontWeight: 'bold', marginTop: 10, fontSize: 16 } }}
+                leftComponent={<LPMSLogo />}
+                centerComponent={
+                <Text
+                    style={{
+                    color: '#232C69',
+                    fontWeight: 'bold',
+                    marginTop: 10,
+                    fontSize: 16,
+                    textAlign: 'center',
+                    maxWidth: '80%',  // Adjust this as needed
+                    flexShrink: 1,    // Allows the text to shrink within the space
+                    flexWrap: 'wrap', // Ensures text wraps to the next line
+                    }}
+                    numberOfLines={2}   // Limits to 2 lines, adjust as needed
+                    allowFontScaling={false}  // Disables font scaling to ensure consistency
+                >
+                    LPMS Warehouse Management System
+                </Text>
+                }
+                rightComponent={<CompanyLogo />}
                 containerStyle={styles.header}
             />
             <ScrollView>
@@ -90,7 +109,7 @@ function ViewPage({ }) {
                         style={styles.scanButton}
                         onPress={dataProjectId}
                     >
-                        <FontAwesome name="qrcode" size={150} color="black" />
+                        <FontAwesome name="qrcode" size={150} color="white" />
                     </TouchableOpacity>
                     <Text style={styles.titleText}>Project Name :</Text>
                     <View style={styles.inputContainer}>
@@ -195,11 +214,23 @@ function ViewPage({ }) {
                     <Text style={styles.titleText}>Status :</Text>
                     <View style={styles.inputContainer}>
                         <TextInput
-                            style={styles.input}
+                            style={styles.inputStatus}
                             onChangeText={setProjectId}
                             value={status}                          
                             editable={false}
                         />
+                    </View>
+                    <Text style={styles.titleText}>Photo 1 :</Text>
+                    <View style={styles.inputContainer}>
+                    </View>
+                    <Text style={styles.titleText}>Photo 2 :</Text>
+                    <View style={styles.inputContainer}>
+                    </View>
+                    <Text style={styles.titleText}>Photo 3 :</Text>
+                    <View style={styles.inputContainer}>
+                    </View>
+                    <Text style={styles.titleText}>Photo 4 :</Text>
+                    <View style={styles.inputContainer}>
                     </View>
                 </View>
             </ScrollView>      
@@ -214,10 +245,22 @@ const styles = StyleSheet.create({
         position: 'relative',
         width: '90%',
     },
+    inputStatus: {
+        height: 50,
+        borderWidth: 3,
+        borderBlockColor: 'white',
+        backgroundColor: 'white',
+        borderRadius: 5,
+        padding: 10,
+        marginHorizontal: 30,
+        fontWeight: 'bold',
+        color: 'blue',
+        textAlign: 'center',
+    },
     input: {
         height: 50,
         borderWidth: 3,
-        borderBlockColor: '#232C69',
+        borderBlockColor: 'white',
         backgroundColor: 'white',
         borderRadius: 5,
         padding: 10,
@@ -230,6 +273,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         margin: 20,
+        color: 'white',
     },
     headerText: {
         fontSize: 26,
@@ -237,11 +281,12 @@ const styles = StyleSheet.create({
         margin: 20,
     },
     header: {
-        backgroundColor: '#232C69',
+        backgroundColor: '#ffff',
     },
     container: {
         flex: 2,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#232C69'
     }
 });

@@ -1,5 +1,5 @@
 import { FontAwesome } from '@expo/vector-icons';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
@@ -12,9 +12,23 @@ import QRScanner from './QRScanner';
 import ViewMain from './ViewMain';
 import Capture from './Capture';
 import CompanyLogo from './CompanyLogo';
+import LPMSLogo from './LPMSLogo';
 
 // Variable for navigation and page linking
 const Stack = createStackNavigator();
+
+const MyTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: '#232C69',
+    background: '#ffffff',
+    card: '#7dbe32', // Warna hijau Tripatra
+    text: 'black',
+    border: '#e0e0e0',
+    notification: '#ff6347',
+  },
+};
 
 // Main functionality and main page
 function HomeScreen({ navigation }) {
@@ -29,8 +43,26 @@ function HomeScreen({ navigation }) {
   return (
     <SafeAreaProvider>
       <Header
-        leftComponent={<CompanyLogo />}
-        centerComponent={{ text: 'Tripatra Engineering', style: { color: '#fff', fontWeight: 'bold', marginTop: 10, fontSize: 16 } }}
+        leftComponent={<LPMSLogo />}
+        centerComponent={
+          <Text
+            style={{
+              color: '#232C69',
+              fontWeight: 'bold',
+              marginTop: 15,
+              fontSize: 14,
+              textAlign: 'center',
+              maxWidth: '80%',  // Adjust this as needed
+              flexShrink: 1,    // Allows the text to shrink within the space
+              flexWrap: 'wrap', // Ensures text wraps to the next line
+            }}
+            numberOfLines={2}   // Limits to 2 lines, adjust as needed
+            allowFontScaling={false}  // Disables font scaling to ensure consistency
+          >
+            LPMS - WAREHOUSE MANAGEMENT SYSTEM
+          </Text>
+        }
+        rightComponent={<CompanyLogo />}
         containerStyle={styles.header}
       />
       <View style={styles.container}>
@@ -48,7 +80,7 @@ function HomeScreen({ navigation }) {
 // For navigating throughout the app
 export default function App() {
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={MyTheme}>
       <Stack.Navigator 
         initialRouteName="Home"
         screenOptions={{
@@ -67,18 +99,18 @@ export default function App() {
 
 const styles = StyleSheet.create({
   submitText: {
-    color: 'white',
+    color: '#232C69',
     fontWeight: 'bold',
     alignSelf: 'center',
     fontSize: 18,
   },
   submitButton: {
-    marginTop: 30,
+    marginTop: 50,
     marginLeft: 110,
     marginRight: 110,
     borderRadius: 10,
     padding: 20,
-    backgroundColor: '#232C69',
+    backgroundColor: '#ffff',
   },
   titleText: {
     fontSize: 16,
@@ -120,7 +152,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#232C69',
   },
   camera: {
     flex: 1,
@@ -146,6 +178,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
   },
   header: {
-    backgroundColor: '#232C69',
+    backgroundColor: '#ffff',
   },
 });
