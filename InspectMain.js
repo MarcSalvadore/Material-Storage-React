@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Header } from 'react-native-elements';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import CompanyLogo from './CompanyLogo';
 import LPMSLogo from './LPMSLogo';
@@ -32,7 +33,13 @@ function InspectPage({ }) {
   const formattedDate = formatDateForDatabase(new Date());
 
   // Replace 'localhost' with your machine's IP address
-  const API_URL = 'https://tp-phr.azurewebsites.net/api/material-storage';
+  const localhost = '10.97.109.199';
+  const API_URL = 'http://${localhost}:3000/api/material-storage';
+  const API_URL_UPLOAD = 'http://${localhost}:3000/api/upload';
+
+  // For Remote Server on Azure
+  // const API_URL = 'https://tp-phr.azurewebsites.net/api/material-storage';
+  // const API_URL_UPLOAD = 'https://tp-phr.azurewebsites.net/api/upload';
 
   const saveData = async () => {
     try {
@@ -55,37 +62,21 @@ function InspectPage({ }) {
         }),
       });
   
-      // Log the raw response for debugging
+      if (!response.ok) {
+        const message = `An error has occurred: ${response.status}`;
+        throw new Error(message);
+      }
+    
+      // Read and parse the response body only once
       const rawResponse = await response.text();
       console.log('Raw response text:', rawResponse);
-  
-      // Parse the response as JSON
-      const jsonResponse = JSON.parse(rawResponse);
-  
-      if (response.ok) {
-        console.warn('Saved Successfully:', jsonResponse);
-
-        // Alert for successful submission
-        alert('Data saved successfully!');
-      } else {
-        console.error('Failed to save. Status:', response.status, 'Response:', jsonResponse);
-      }
+    
+      const data = JSON.parse(rawResponse);
+      console.warn('Saved Successfully:', data);
+    
+      return data;
     } catch (error) {
       console.error('Error during fetch:', error);
-    }
-  };
-  
-
-  const handleDeletePicture = async () => {
-    if (capturedImage) {
-      try {
-        const path = capturedImage.split("file:///").pop();
-        await RNFetchBlob.fs.unlink(path);
-        alert("File deleted");
-        setCapturedImage(null);
-      } catch (err) {
-        alert("Failed to delete file: " + err.message);
-      }
     }
   };
 
@@ -138,6 +129,49 @@ function InspectPage({ }) {
   const [photo3, setPhoto3] = useState('')
   const [photo4, setPhoto4] = useState('')
 
+  const handleImageCapture = (setImage) => {
+    navigation.navigate('Capture', {
+      onCapture: (data) => {
+        setImage(data);
+        // uploadImage(data, setImage);
+      }
+    });
+  };
+
+  const uploadImage = async (uri, materialStorageId) => {
+    try {
+      let formData = new FormData();
+      formData.append('file', {
+        uri,
+        material_storage_id: materialStorageId,
+        // type: 'image/jpeg', // Adjust the file type as needed
+      });
+      formData.append('material_storage_id', materialStorageId);
+  
+      const response = await fetch(API_URL_UPLOAD, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          // Add any necessary headers like authorization token if required
+        },
+      });
+  
+      if (response.ok) {
+        const errorText = await response.text();
+        const message = `An error has occurred: ${response.status}, ${errorText}`;
+        throw new Error(message);
+      }
+  
+      const data = await response.json();
+      console.log('Upload successful:', data);
+      return data.attachment_url; // Return the URL of the uploaded image
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+  };
+
   // For deleting input inside the TextInput
   const handleClearText = (setter) => {
     setter('');
@@ -152,58 +186,78 @@ function InspectPage({ }) {
     });
   };
 
-  // Capture image
-  const imageCapture = () => {
-    navigation.navigate('Capture', {
-      onCapture: (data) => {
-        setCapturedImage(data);
-        setImage(data); // Setting the URI of the captured image
+  // // Capture image
+  // const imageCapture = () => {
+  //   navigation.navigate('Capture', {
+  //     onCapture: (data) => {
+  //       setCapturedImage(data);
+  //       setImage(data); // Setting the URI of the captured image
+  //     }
+  //   });
+  // };
+
+  // // Capture image
+  // const imageItemCapture = () => {
+  //   navigation.navigate('Capture', {
+  //     onCapture: (data) => {
+  //       setCapturedImage(data);
+  //       setImageItem(data); // Setting the URI of the captured image
+  //     }
+  //   });
+  // };
+
+  // // Capture image
+  // const photo3Capture = () => {
+  //   navigation.navigate('Capture', {
+  //     onCapture: (data) => {
+  //       setCapturedImage(data);
+  //       setPhoto3(data); // Setting the URI of the captured image
+  //     }
+  //   });
+  // };
+
+  // // Capture image
+  // const photo4Capture = () => {
+  //   navigation.navigate('Capture', {
+  //     onCapture: (data) => {
+  //       setCapturedImage(data);
+  //       setPhoto4(data); // Setting the URI of the captured image
+  //     }
+  //   });
+  // };
+
+  const handleSubmit = async () => {
+    try {
+      // Save the data first
+      const savedData = await saveData();
+      const materialStorageId = savedData.id;
+      console.log('Material ID in Database : ', materialStorageId)
+
+      // Clear all input boxes
+      handleClearText(setMaterialId);
+      handleClearText(setLocationArea);
+      handleClearText(setNew);
+      handleClearText(setLocationId);
+      handleClearText(setInOut);
+      handleClearText(setStatus);
+      handleClearText(setImage);
+      // handleClearText(setImageItem);
+      // handleClearText(setPhoto3);
+      // handleClearText(setPhoto4);
+      
+      if (savedData) {
+        // Update the database with the image URL
+        // Upload the image with the material_storage_id
+        const imageUrl = await uploadImage(images, materialStorageId);
+        console.log('Image uploaded successfully:', imageUrl);
+
+      } else {
+        throw new Error('Failed to retrieve saved data ID.');
       }
-    });
-  };
-
-  // Capture image
-  const imageItemCapture = () => {
-    navigation.navigate('Capture', {
-      onCapture: (data) => {
-        setCapturedImage(data);
-        setImageItem(data); // Setting the URI of the captured image
-      }
-    });
-  };
-
-  // Capture image
-  const photo3Capture = () => {
-    navigation.navigate('Capture', {
-      onCapture: (data) => {
-        setCapturedImage(data);
-        setPhoto3(data); // Setting the URI of the captured image
-      }
-    });
-  };
-
-  // Capture image
-  const photo4Capture = () => {
-    navigation.navigate('Capture', {
-      onCapture: (data) => {
-        setCapturedImage(data);
-        setPhoto4(data); // Setting the URI of the captured image
-      }
-    });
-  };
-
-  const handleSubmit = () => {
-    // Your submission logic here
-    saveData()
-
-    // Clear all box
-    handleClearText(setMaterialId);
-    handleClearText(setLocationArea);
-    handleClearText(setNew);
-    handleClearText(setLocationId);
-    handleClearText(setInOut);
-    handleClearText(setStatus);
-  };
+    } catch (error) {
+      console.error('Error during submission:', error);
+    }
+  };  
 
   return (
     <SafeAreaProvider>
@@ -330,12 +384,6 @@ function InspectPage({ }) {
           </View>
           <Text style={styles.titleText}>Outdoor-Indoor :</Text>
           <View style={styles.inputContainer}>
-            {/* <TextInput
-              style={styles.input}
-              onChangeText={setInOut}
-              value={textG}
-              placeholder="Input Your Text Here"
-            /> */}
             <View style={styles.pickerWrapper}>
               <Picker
                 selectedValue={textG}
@@ -380,7 +428,7 @@ function InspectPage({ }) {
             />
             <TouchableOpacity
               style={styles.scanButton}
-              onPress={imageCapture}
+              onPress={() => handleImageCapture(setImage)}
             >
               <FontAwesome name="camera" size={30} color="white" />
             </TouchableOpacity>
@@ -390,7 +438,7 @@ function InspectPage({ }) {
               </TouchableOpacity>
             )}
           </View>
-          <Text style={styles.titleText}>Attachment Item :</Text>
+          {/* <Text style={styles.titleText}>Attachment Item :</Text>
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
@@ -401,7 +449,7 @@ function InspectPage({ }) {
             />
             <TouchableOpacity
               style={styles.scanButton}
-              onPress={imageItemCapture}
+              onPress={ () => handleImageCapture(setImageItem)}
             >
               <FontAwesome name="camera" size={30} color="white" />
             </TouchableOpacity>
@@ -422,11 +470,11 @@ function InspectPage({ }) {
             />
             <TouchableOpacity
               style={styles.scanButton}
-              onPress={photo3Capture}
+              onPress={() => handleImageCapture(setPhoto3)}
             >
               <FontAwesome name="camera" size={30} color="white" />
             </TouchableOpacity>
-            {imageItem.length > 0 && (
+            {photo3.length > 0 && (
               <TouchableOpacity style={styles.clearButton} onPress={() => handleClearText(setPhoto3)}>
                 <FontAwesome name="close" size={24} color="red" />
               </TouchableOpacity>
@@ -443,16 +491,16 @@ function InspectPage({ }) {
             />
             <TouchableOpacity
               style={styles.scanButton}
-              onPress={photo4Capture}
+              onPress={() => handleImageCapture(setPhoto4)}
             >
               <FontAwesome name="camera" size={30} color="white" />
             </TouchableOpacity>
-            {imageItem.length > 0 && (
+            {photo4.length > 0 && (
               <TouchableOpacity style={styles.clearButton} onPress={() => handleClearText(setPhoto4)}>
                 <FontAwesome name="close" size={24} color="red" />
               </TouchableOpacity>
             )}
-          </View>
+          </View> */}
           <Pressable style={styles.submitButton} onPress={handleSubmit}>
             <Text style={styles.submitText}>Submit</Text>
           </Pressable>
@@ -492,10 +540,11 @@ const styles = StyleSheet.create({
     borderColor: 'black',
     backgroundColor: 'white',
     borderRadius: 5,
-    paddingLeft: 10,
+    paddingLeft: 0,
     marginRight: 50,
     justifyContent: 'center',
-    color: 'blue'
+    color: 'blue',
+    fontWeight: 'bold',
   },
   picker: {
     width: '100%',

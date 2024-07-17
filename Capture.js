@@ -2,6 +2,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Camera, CameraView } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
+import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useRef, useState } from 'react';
 import { Dimensions, Image, Pressable, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -123,6 +124,7 @@ const styles = StyleSheet.create({
   doneButton: {
     marginBottom: 15,
     justifyContent: 'flex-end',
+    padding: 10,
   },
   captureButton: {
     marginBottom: 15,

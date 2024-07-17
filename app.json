@@ -40,6 +40,12 @@
           "recordAudioAndroid": true
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos."
+        }
+      ],
       "expo-font",
       "expo-asset"
     ],

@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@azure/storage-blob": "^12.23.0",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@expo/vector-icons": "^14.0.2",
@@ -16,6 +17,7 @@
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@mui/icons-material": "^5.15.20",
     "@mui/material": "^5.15.20",
+    "@react-native-picker/picker": "2.7.5",
     "@react-native/metro-config": "^0.74.85",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/stack": "^6.3.29",
@@ -28,10 +30,12 @@
     "expo-barcode-scanner": "~13.0.1",
     "expo-camera": "~15.0.13",
     "expo-font": "~12.0.8",
+    "expo-image-picker": "~15.0.7",
     "expo-media-library": "~16.0.4",
     "expo-status-bar": "~1.12.1",
     "express": "^4.19.2",
     "metro-config": "^0.80.9",
+    "multer": "^1.4.5-lts.1",
     "net": "^1.0.2",
     "pg": "^8.12.0",
     "qr-scanner": "^1.4.2",
@@ -47,8 +51,7 @@
     "react-native-screens": "^3.31.1",
     "react-native-svg": "^15.2.0",
     "react-native-svg-transformer": "^1.5.0",
-    "react-native-vector-icons": "^10.1.0",
-    "@react-native-picker/picker": "2.7.5"
+    "react-native-vector-icons": "^10.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

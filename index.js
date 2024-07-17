@@ -1,11 +1,14 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const { Pool } = require('pg');
+const multer = require('multer');
+const { BlobServiceClient } = require('@azure/storage-blob');
 
 const app = express();
 const port = process.env.PORT || 3000;
-const localhost = '192.168.1.142';
+const localhost = '10.97.109.199';
 
 // Middleware
 app.use(bodyParser.json());
@@ -13,49 +16,29 @@ app.use(cors());
 
 // PostgreSQL client setup
 const pool = new Pool({
-  user: process.env.DB_USER || 'tapdatalakeprod@tapdatalake-prod',
-  host: process.env.DB_HOST || 'tapdatalake-prod.postgres.database.azure.com',
-  database: process.env.DB_NAME || 'tapdatalake',
-  password: process.env.DB_PASSWORD || 'JendSudirm@n2024',
-  port: process.env.DB_PORT || 5432,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
 });
 
-const upload = multer({ storage: multer.memoryStorage() });
-// Route to upload a file
-app.post('/api/upload', checkApiToken, upload.single('file'), async (req, res) => {
-  try {
-    const blobName = new Date().getTime() + '-' + req.file.originalname;
-    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+try {
+  const AZURE_STORAGE_CONNECTION_STRING = 
+  process.env.AZURE_CONNECTION_STRING;
 
-    // Upload file to Azure Blob Storage
-    await blockBlobClient.upload(req.file.buffer, req.file.size);
+if (!AZURE_STORAGE_CONNECTION_STRING) {
+  throw Error('Azure Storage Connection string not found');
+}
 
-    // Get file URL
-    const fileUrl = blockBlobClient.url;
-
-    // Save file URL to PostgreSQL
-    const { projectId } = req.body;
-    const query = 'INSERT INTO pms.c0_04_04_epc_material_storage_attachments_db (material_storage_id,attachment_name, attachment_url) VALUES ($1, $2, $3) RETURNING *';
-    const values = [projectId, fileUrl];
-
-    const result = await pool.query(query, values);
-    res.json(result.rows[0]); // Return the inserted row
-  } catch (err) {
-    console.error('Error uploading file:', err.message);
-    res.status(500).send('Server error');
-  }
-  });
-
-// Material Storage
-app.get('/api/material-storage', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM pms.c0_04_03_epc_material_storage_db');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
-  }
-});
+// Create the BlobServiceClient object with connection string
+const blobServiceClient = BlobServiceClient.fromConnectionString(
+  AZURE_STORAGE_CONNECTION_STRING
+);
+} catch (err) {
+  console.error(err.message);
+  res.status(500).send('Server error');
+}
 
 // Route to handle POST request for inserting into material_storage table
 app.post('/api/material-storage', async (req, res) => {
@@ -114,7 +97,38 @@ app.get('/api/material-attachment', async (req, res) => {
   }
 });
 
+const upload = multer({ storage: multer.memoryStorage() });
+// Route to upload a file
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+  try {
+    const blobName = new Date().getTime() + '-' + req.file.originalname;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    // Upload file to Azure Blob Storage
+    await blockBlobClient.upload(req.file.buffer, req.file.size);
+
+    // Get file URL
+    const fileUrl = blockBlobClient.url;
+
+    // Save file URL to PostgreSQL
+    const { material_storage_id } = req.body;
+    const query = 'INSERT INTO pms.c0_04_04_epc_material_storage_attachments_db (material_storage_id, attachment_name, attachment_url) VALUES ($1, $2, $3) RETURNING *';
+    const values = [material_storage_id, req.file.originalname, fileUrl];
+
+    const result = await pool.query(query, values);
+    res.json(result.rows[0]); // Return the inserted row
+  } catch (err) {
+    console.error('Error uploading file:', err.message,);
+    console.log('Error uploading file:', err.message)
+    res.status(500).send('Server error');
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on http://${localhost}:${port}`);
 });
+
+// app.listen(port, () => {
+//   console.log(`Server is running on https://tp-phr.azurewebsites.net`);
+// });
 
