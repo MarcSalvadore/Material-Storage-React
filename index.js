@@ -23,22 +23,20 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
-try {
-  const AZURE_STORAGE_CONNECTION_STRING = 
-  process.env.AZURE_CONNECTION_STRING;
-
-if (!AZURE_STORAGE_CONNECTION_STRING) {
-  throw Error('Azure Storage Connection string not found');
-}
-
+const container = process.env.AZURE_CONTAINER;
+const AZURE_STORAGE_CONNECTION_STRING = process.env.AZURE_CONNECTION_STRING;
 // Create the BlobServiceClient object with connection string
-const blobServiceClient = BlobServiceClient.fromConnectionString(
-  AZURE_STORAGE_CONNECTION_STRING
-);
-} catch (err) {
-  console.error(err.message);
-  res.status(500).send('Server error');
-}
+const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
+// try {
+
+//   if (!AZURE_STORAGE_CONNECTION_STRING) {
+//     throw Error('Azure Storage Connection string not found');
+//   }
+
+//   } catch (err) {
+//     console.error(err.message);
+//     res.status(500).send('Server error');
+// }
 
 // Route to handle POST request for inserting into material_storage table
 app.post('/api/material-storage', async (req, res) => {
@@ -86,10 +84,21 @@ app.post('/api/material-storage', async (req, res) => {
   }
 });
 
-// Material Storage
+// Material Attachment for images
 app.get('/api/material-attachment', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM pms.c0_04_04_epc_material_storage_attachments_db');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Material Storage
+app.get('/api/material-storage', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM pms.c0_04_03_epc_material_storage_db');
     res.json(result.rows);
   } catch (err) {
     console.error(err.message);
@@ -101,19 +110,22 @@ const upload = multer({ storage: multer.memoryStorage() });
 // Route to upload a file
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   try {
-    const blobName = new Date().getTime() + '-' + req.file.originalname;
+    console.log(req)
+    const { material_storage_id, originalname, file } = req.body;
+    const blobName = originalname;
+    const containerClient = blobServiceClient.getContainerClient(container)
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    // const blockBlobClient = blobServiceClient.getBlockBlobClient(blobName);
 
     // Upload file to Azure Blob Storage
-    await blockBlobClient.upload(req.file.buffer, req.file.size);
+    await blockBlobClient.upload(file, file.length);
 
     // Get file URL
     const fileUrl = blockBlobClient.url;
 
     // Save file URL to PostgreSQL
-    const { material_storage_id } = req.body;
     const query = 'INSERT INTO pms.c0_04_04_epc_material_storage_attachments_db (material_storage_id, attachment_name, attachment_url) VALUES ($1, $2, $3) RETURNING *';
-    const values = [material_storage_id, req.file.originalname, fileUrl];
+    const values = [material_storage_id, originalname, fileUrl];
 
     const result = await pool.query(query, values);
     res.json(result.rows[0]); // Return the inserted row
@@ -124,11 +136,11 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on http://${localhost}:${port}`);
-});
-
 // app.listen(port, () => {
-//   console.log(`Server is running on https://tp-phr.azurewebsites.net`);
+//   console.log(`Server is running on http://${localhost}:${port}`);
 // });
+
+app.listen(port, () => {
+  console.log(`Server is running on https://tp-phr.azurewebsites.net`);
+});
 

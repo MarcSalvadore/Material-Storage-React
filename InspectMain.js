@@ -33,13 +33,12 @@ function InspectPage({ }) {
   const formattedDate = formatDateForDatabase(new Date());
 
   // Replace 'localhost' with your machine's IP address
-  const localhost = '10.97.109.199';
-  const API_URL = 'http://${localhost}:3000/api/material-storage';
-  const API_URL_UPLOAD = 'http://${localhost}:3000/api/upload';
+  // const API_URL = 'http://10.97.109.199:3000/api/material-storage';
+  // const API_URL_UPLOAD = 'http://10.97.109.199:3000/api/upload';
 
   // For Remote Server on Azure
-  // const API_URL = 'https://tp-phr.azurewebsites.net/api/material-storage';
-  // const API_URL_UPLOAD = 'https://tp-phr.azurewebsites.net/api/upload';
+  const API_URL = 'https://tp-phr.azurewebsites.net/api/material-storage';
+  const API_URL_UPLOAD = 'https://tp-phr.azurewebsites.net/api/upload';
 
   const saveData = async () => {
     try {
@@ -143,10 +142,10 @@ function InspectPage({ }) {
       let formData = new FormData();
       formData.append('file', {
         uri,
-        material_storage_id: materialStorageId,
-        // type: 'image/jpeg', // Adjust the file type as needed
+        type: 'image/png'
       });
       formData.append('material_storage_id', materialStorageId);
+      formData.append('originalname', "photo.png");
   
       const response = await fetch(API_URL_UPLOAD, {
         method: 'POST',
@@ -157,7 +156,7 @@ function InspectPage({ }) {
         },
       });
   
-      if (response.ok) {
+      if (!response.ok) {
         const errorText = await response.text();
         const message = `An error has occurred: ${response.status}, ${errorText}`;
         throw new Error(message);
@@ -168,7 +167,6 @@ function InspectPage({ }) {
       return data.attachment_url; // Return the URL of the uploaded image
     } catch (error) {
       console.error('Error uploading image:', error);
-      throw error;
     }
   };
 
@@ -233,24 +231,27 @@ function InspectPage({ }) {
       const materialStorageId = savedData.id;
       console.log('Material ID in Database : ', materialStorageId)
 
-      // Clear all input boxes
-      handleClearText(setMaterialId);
-      handleClearText(setLocationArea);
-      handleClearText(setNew);
-      handleClearText(setLocationId);
-      handleClearText(setInOut);
-      handleClearText(setStatus);
-      handleClearText(setImage);
-      // handleClearText(setImageItem);
-      // handleClearText(setPhoto3);
-      // handleClearText(setPhoto4);
       
       if (savedData) {
         // Update the database with the image URL
         // Upload the image with the material_storage_id
         const imageUrl = await uploadImage(images, materialStorageId);
+        if (!imageUrl) {
+          throw error
+        }
         console.log('Image uploaded successfully:', imageUrl);
-
+        
+        // Clear all input boxes
+        handleClearText(setMaterialId);
+        handleClearText(setLocationArea);
+        handleClearText(setNew);
+        handleClearText(setLocationId);
+        handleClearText(setInOut);
+        handleClearText(setStatus);
+        handleClearText(setImage);
+        // handleClearText(setImageItem);
+        // handleClearText(setPhoto3);
+        // handleClearText(setPhoto4);
       } else {
         throw new Error('Failed to retrieve saved data ID.');
       }

@@ -4,14 +4,16 @@ import { useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Header } from 'react-native-elements';
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import * as ImagePicker from 'expo-image-picker';
 import CompanyLogo from './CompanyLogo';
 import LPMSLogo from './LPMSLogo';
 
 function ViewPage({ }) {
     const navigation = useNavigation();
     const route = useRoute();
-    const [projectId, setProjectId] = useState('')
+    const [projectId, setProjectId] = useState(88)
     const [response, setResponse] = useState([]);
+    const [responseAttachment, setResponseAttachment] = useState([]);
     const [error, setError] = useState(null);
 
     // Handle QRScanner navigation and data retrieval from QRScanner page
@@ -25,6 +27,7 @@ function ViewPage({ }) {
 
     // Replace 'localhost' with your machine's IP address
     const API_URL = 'https://tp-phr.azurewebsites.net/api/material-storage';
+    const API_URL_ATTACHMENT = 'https://tp-phr.azurewebsites.net/api/material-attachment';
 
     // Use fetch with apiUrl
     useEffect(() => {
@@ -76,6 +79,44 @@ function ViewPage({ }) {
     const updatedOn = getColumnDataById(projectId, 'updated_on');
     const status = getColumnDataById(projectId, 'status');
 
+     // Use fetch with apiUrl
+     useEffect(() => {
+        fetch(API_URL_ATTACHMENT)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Network response was not ok ' + res.statusText);
+                }
+                return res.json();
+            })
+            .then(
+                (result) => {
+                    // For debugging
+                    // console.log('Fetched data:', result);
+                    setResponseAttachment(result);
+                },
+                (error) => {
+                    setError(error.message);
+                }
+            )
+            .catch((error) => {
+                setError(error.message);
+            });
+    }, [API_URL_ATTACHMENT]);
+
+    const getPhotoByMaterialId = (materialId, column) => {
+        let item = null;
+        for (let i = 0; i < responseAttachment.length; i++) {
+            if (responseAttachment[i].material_storage_id === materialId) {
+                item = responseAttachment[i];
+                break;
+            }
+        }
+        // console.log('Result:', response);
+        // console.log(`Finding item with id ${proID}:`, item);
+        return item ? item[column] : 'No Image Found'
+    };
+
+    const blob_url = getPhotoByMaterialId(projectId, 'attachment_url');
 
     return (
         <SafeAreaProvider>
@@ -220,10 +261,24 @@ function ViewPage({ }) {
                             editable={false}
                         />
                     </View>
-                    <Text style={styles.titleText}>Photo 1 :</Text>
+                    <Text style={styles.titleText}>Preview :</Text>
+                    {error && <Text style={styles.errorText}>{error}</Text>}
                     <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.inputStatus}
+                            onChangeText={setProjectId}
+                            value={blob_url}                          
+                            editable={false}
+                        />
+                        {blob_url ? (
+                            <Image source={{ uri: blob_url }} style={styles.image} />
+                        ) : (
+                            <View style={styles.placeholder}>
+                                <Text>No image to display</Text>
+                            </View>
+                        )}
                     </View>
-                    <Text style={styles.titleText}>Photo 2 :</Text>
+                    {/* <Text style={styles.titleText}>Photo 2 :</Text>
                     <View style={styles.inputContainer}>
                     </View>
                     <Text style={styles.titleText}>Photo 3 :</Text>
@@ -231,7 +286,7 @@ function ViewPage({ }) {
                     </View>
                     <Text style={styles.titleText}>Photo 4 :</Text>
                     <View style={styles.inputContainer}>
-                    </View>
+                    </View> */}
                 </View>
             </ScrollView>      
         </SafeAreaProvider>
@@ -244,6 +299,19 @@ const styles = StyleSheet.create({
     inputContainer: {
         position: 'relative',
         width: '90%',
+    },
+    placeholder: {
+        width: 200,
+        height: 200,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#ddd',
+        marginTop: 20,
+    },
+    image: {
+        width: 200,
+        height: 200,
+        marginTop: 20,
     },
     inputStatus: {
         height: 50,
