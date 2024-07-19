@@ -140,18 +140,19 @@ function InspectPage({ }) {
   const uploadImage = async (uri, materialStorageId) => {
     try {
       let formData = new FormData();
+      const fileName = `photo-${materialStorageId}.png`;
       formData.append('file', {
         uri,
         type: 'image/png'
       });
       formData.append('material_storage_id', materialStorageId);
-      formData.append('originalname', "photo.png");
+      formData.append('originalname', fileName);
   
       const response = await fetch(API_URL_UPLOAD, {
         method: 'POST',
         body: formData,
         headers: {
-          'Content-Type': 'multipart/form-data',
+          // 'Content-Type': 'multipart/form-data',
           // Add any necessary headers like authorization token if required
         },
       });

@@ -5,16 +5,19 @@ import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View 
 import { Header } from 'react-native-elements';
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import CompanyLogo from './CompanyLogo';
 import LPMSLogo from './LPMSLogo';
 
 function ViewPage({ }) {
     const navigation = useNavigation();
     const route = useRoute();
-    const [projectId, setProjectId] = useState(88)
+    const [projectId, setProjectId] = useState(111)
     const [response, setResponse] = useState([]);
     const [responseAttachment, setResponseAttachment] = useState([]);
     const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [imageUri, setImageUri] = useState('');
 
     // Handle QRScanner navigation and data retrieval from QRScanner page
     const dataProjectId = () => {
@@ -117,6 +120,54 @@ function ViewPage({ }) {
     };
 
     const blob_url = getPhotoByMaterialId(projectId, 'attachment_url');
+
+    const fetchImageAsBase64 = async (url) => {
+        try {
+            console.log(`Fetching image from URL: ${url}`);
+            const fileUri = FileSystem.documentDirectory + 'temp_image.png';
+        
+            // Retry logic in case of temporary issues
+            let attempts = 0;
+            let maxAttempts = 3;
+            let downloadedFile;
+    
+            while (attempts < maxAttempts) {
+                downloadedFile = await FileSystem.downloadAsync(url, fileUri);
+                console.log('Downloaded file status:', downloadedFile);
+
+                if (downloadedFile.status === 200) {
+                    break;
+                }
+
+                attempts += 1;
+                console.log(`Attempt ${attempts} failed. Retrying...`);
+            }
+
+            if (downloadedFile.status !== 200) {
+                throw new Error(`Image fetch failed with status: ${downloadedFile.status}`);
+            }
+
+            const base64 = await FileSystem.readAsStringAsync(downloadedFile.uri, {
+                encoding: FileSystem.EncodingType.Base64,
+            });
+            const imageUri = `data:image/png;base64,${base64}`;
+            setImageUri(imageUri);
+            setLoading(false);
+
+        } catch (error) {
+          console.error('Error fetching image:', error);
+          setError(error.message);
+          setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const url = getPhotoByMaterialId(projectId, 'attachment_url');
+        if (url && url !== 'No Image Found') {
+            setLoading(true);
+            fetchImageAsBase64(url);
+        }
+    }, [projectId, responseAttachment]);
 
     return (
         <SafeAreaProvider>
@@ -267,14 +318,14 @@ function ViewPage({ }) {
                         <TextInput
                             style={styles.inputStatus}
                             onChangeText={setProjectId}
-                            value={blob_url}                          
+                            value={blob_url || ''}                          
                             editable={false}
                         />
-                        {blob_url ? (
-                            <Image source={{ uri: blob_url }} style={styles.image} />
+                        {imageUri ? (
+                            <Image source={{ uri: imageUri }} style={styles.image} />
                         ) : (
                             <View style={styles.placeholder}>
-                                <Text>No image to display</Text>
+                                <Text>Image not Available</Text>
                             </View>
                         )}
                     </View>
@@ -301,17 +352,22 @@ const styles = StyleSheet.create({
         width: '90%',
     },
     placeholder: {
-        width: 200,
-        height: 200,
+        marginHorizontal: 30,
+        height: 300,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#ddd',
-        marginTop: 20,
+        marginTop: 40,
+        marginBottom: 40,
     },
     image: {
-        width: 200,
-        height: 200,
-        marginTop: 20,
+        marginHorizontal: 30,
+        height: 300,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#ddd',
+        marginTop: 40,
+        marginBottom: 40,
     },
     inputStatus: {
         height: 50,
